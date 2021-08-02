@@ -3,6 +3,7 @@ const morgan = require('morgan');
 
 const morganDev = morgan('dev');
 const app = express();
+app.set('view engine', 'ejs');
 
 const PORT = 4321;
 
@@ -19,6 +20,10 @@ app.get("/", (req, res) => {
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabse);
+});
+
+app.get("/hello", (req, res) => {
+  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 app.listen(PORT, () => {
