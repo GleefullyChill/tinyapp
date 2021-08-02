@@ -13,6 +13,11 @@ const urlDatabse = {
 };
 app.use(morganDev);
 
+app.get("/urls", (req, res) => {
+  const templateVars = { urls: urlDatabse };
+  res.render('urls_index', templateVars);
+});
+
 
 app.get("/", (req, res) => {
   res.send("This is your only page!");
