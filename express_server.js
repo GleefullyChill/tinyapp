@@ -15,6 +15,6 @@ app.get("/", (req, res) => {
   res.send("This is your only page!");
 })
 
-app.listen(PORT, () = {
+app.listen(PORT, () => {
   console.log(`Listening on port: ${PORT}!`)
 })
