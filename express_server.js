@@ -1,11 +1,32 @@
 const express = require('express');
 const morgan = require('morgan');
-
 const morganDev = morgan('dev');
-const app = express();
-app.set('view engine', 'ejs');
 
 const PORT = 4321;
+
+const app = express();
+
+const bodyParser = require("body-parser");
+app.use(express.urlencoded({extended: true}));
+app.set('view engine', 'ejs');
+
+const generateRandomString = function() {
+  let str = "";
+  for (let i = 0; i < 6; i++) {
+    let char = Math.random() * 61;
+    if (char < 10) {
+      char = Math.floor(char);
+      str += char;
+    } else if (char > 35) {
+      char = String.fromCharCode(char + 29);
+      str += char;
+    } else {
+      char = String.fromCharCode(char + 87);
+      str += char;
+    }
+  }
+  console.log(str);
+};
 
 const urlDatabse = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -17,11 +38,14 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabse };
   res.render('urls_index', templateVars);
 });
-app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabse[req.params.shortURL]}//longURL/* What goes here? */ };
-  res.render("urls_show", templateVars);
-});
 
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
+});
+app.post("/urls", (req, res) => {
+  console.log(req.body);
+  res.send('yoko ono');
+});
 
 app.get("/", (req, res) => {
   res.send("This is your only page!");
@@ -33,6 +57,11 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
+
+app.get("/urls/:shortURL", (req, res) => {
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabse[req.params.shortURL]};//longURL/* What goes here? */ };
+  res.render("urls_show", templateVars);
 });
 
 app.listen(PORT, () => {
