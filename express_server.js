@@ -47,15 +47,22 @@ app.post("/urls", (req, res) => {
   urlDatabse[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
 });
+
 //redirects the shortURL from its respective /url to the corresponding web addreess
 app.get("/u/:shortURL", (req, res) => {
-  console.log(req.params.shortURL);
   const longURL = urlDatabse[req.params.shortURL];
   if (longURL === undefined) {
     res.redirect('/urls');
   } else {
     res.redirect(longURL);
   }
+});
+
+//should delete the respective shortURL
+app.post("/urls/9sm5xK/delete:shortURL", (req, res) => {
+  console.log(shortURL)
+  delete urlDatabse[shortURL];
+  res.redirect(`/urls`);
 });
 
 app.get("/", (req, res) => {
