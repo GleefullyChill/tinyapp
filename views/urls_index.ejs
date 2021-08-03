@@ -19,21 +19,28 @@
         <tr>
           <th scope="col">Short URL</th>
           <th scope="col">Long URL</th>
+          <th scope="col">Edit</th>
+          <th scope="col">Delete</th>
         </tr>
       </thead>
       <tbody>
         <% for(let url in urls) { %>
           <tr>
             <td><!--Made the short url on the /urls page link to its respective /url-->
-              <a class="nav-item nav-link" href="/urls/<%= url %>"><%= url %></a>
+              <a href="/urls/<%= url %>"><%= url %></a>
               
             </td>
             <td><%= urls[url] %></td>
-            <td><!--created a delete button?-->
-              <form method="POST" action="/urls/<%= url %>/delete/">
+            <td><!--created an edit button and a delete button?-->
+              <a href="/urls/<%= url %>">
+                <button type="submit" class="btn btn-warning">Edit</button>
+              </a>
+            </td>
+            <td>
+              <form method="POST" action="/urls/<%= url %>/delete">
                 <button type="submit" class="btn btn-danger">Delete
                 <input type="hidden" name="url">
-              </button>
+                </button>
               </form>
             </td>
           </tr>

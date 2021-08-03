@@ -47,6 +47,11 @@ app.post("/urls", (req, res) => {
   urlDatabse[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
 });
+app.post("/urls/:shortURL/Edit", (req, res) => {
+  const shortURL = req.params['shortURL'];
+  urlDatabse[shortURL] = req.body.longURL;
+  res.redirect(`/urls/${shortURL}`);
+});
 
 //redirects the shortURL from its respective /url to the corresponding web addreess
 app.get("/u/:shortURL", (req, res) => {
