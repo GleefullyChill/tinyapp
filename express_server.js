@@ -17,6 +17,10 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabse };
   res.render('urls_index', templateVars);
 });
+app.get("/urls/:shortURL", (req, res) => {
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabse[req.params.shortURL]}//longURL/* What goes here? */ };
+  res.render("urls_show", templateVars);
+});
 
 
 app.get("/", (req, res) => {
