@@ -41,17 +41,21 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
+//after creating a new shortURL it redirects to the shorURL's respective /url
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabse[shortURL] = req.body.longURL;
-  
   res.redirect(`/urls/${shortURL}`);
 });
-
+//redirects the shortURL from its respective /url to the corresponding web addreess
 app.get("/u/:shortURL", (req, res) => {
   console.log(req.params.shortURL);
   const longURL = urlDatabse[req.params.shortURL];
-  res.redirect(longURL);
+  if (longURL === undefined) {
+    res.redirect('/urls');
+  } else {
+    res.redirect(longURL);
+  }
 });
 
 app.get("/", (req, res) => {
