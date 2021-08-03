@@ -13,8 +13,8 @@ const generateRandomString = function() {
   let str = "";
   for (let i = 0; i < 6; i++) {
     let char = Math.random() * 61;
+    char = Math.floor(char);
     if (char < 10) {
-      char = Math.floor(char);
       str += char;
     } else if (char > 35) {
       char = String.fromCharCode(char + 29);
@@ -59,9 +59,8 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 //should delete the respective shortURL
-app.post("/urls/9sm5xK/delete:shortURL", (req, res) => {
-  console.log(shortURL)
-  delete urlDatabse[shortURL];
+app.post("/urls/:shortURL/delete", (req, res) => {
+  delete urlDatabse[req.params['shortURL']];
   res.redirect(`/urls`);
 });
 

@@ -30,8 +30,10 @@
             </td>
             <td><%= urls[url] %></td>
             <td><!--created a delete button?-->
-              <form method="POST" action="/urls/9sm5xK/delete/<%= url %>">
-              <button type="delete" class="btn btn-danger">Delete</button>
+              <form method="POST" action="/urls/<%= url %>/delete/">
+                <button type="submit" class="btn btn-danger">Delete
+                <input type="hidden" name="url">
+              </button>
               </form>
             </td>
           </tr>
