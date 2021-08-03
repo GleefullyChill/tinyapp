@@ -6,7 +6,6 @@ const PORT = 4321;
 
 const app = express();
 
-const bodyParser = require("body-parser");
 app.use(express.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
 
@@ -25,7 +24,7 @@ const generateRandomString = function() {
       str += char;
     }
   }
-  console.log(str);
+  return str;
 };
 
 const urlDatabse = {
@@ -43,12 +42,19 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send('yoko ono');
+  const shortURL = generateRandomString();
+  urlDatabse[shortURL] = req.body.longURL;
+  
+  res.redirect(`/urls/${shortURL}`);
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabse[shortURL];
+  res.redirect(longURL);
 });
 
 app.get("/", (req, res) => {
-  res.send("This is your only page!");
+  res.send("This is your HOME page!");
 });
 
 app.get("/urls.json", (req, res) => {
