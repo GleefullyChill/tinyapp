@@ -36,7 +36,25 @@ const generateRandomString = function() {
   }
   return str;
 };
-
+//check email against user information
+const checkUserEmail = function(email) {
+  for (const user in users) {
+    if (email === users[user].email) {
+      return true;
+    }
+  }
+  return false;
+};
+//check password, maybe email, against user information
+const checkUserCredentials = function(pasword, email) {
+  for (const user in users) {
+    if (pasword === users[user].pasword) {
+      if (!email) return true;
+      else if (email === users[user].email) return true;
+    }
+  }
+  return false;
+};
 //databases should be moved to a separate file
 //holds data on urls and their respective short URLS
 const urlDatabse = {
@@ -47,19 +65,16 @@ const urlDatabse = {
 const users = {
   RandomeID: {
     id: 'RandomID',
-    username: 'Jund',
     email: 'ipj@mt.g',
     password: 'jund4lyfe'
   },
   RandomID2: {
     id: 'RandomID2',
-    username: 'Bant',
     email: 'no@mt.g',
     password: 'ISayNo'
   },
   RandomID3: {
     id: 'RandomID3',
-    username: 'Simic',
     email: 'bio@mt.g',
     password: 'biotech'
   }
@@ -82,7 +97,7 @@ app.get("/hello", (req, res) => {
 //a place to browse the short URLs and where they lead, currently acts a starting/ending page
 app.get("/urls", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"],
+    id: req.cookies["id"],
     id: req.cookies.id
   };
   res.render('urls_index', templateVars);
@@ -96,7 +111,7 @@ app.get("/urls/new", (req, res) => {
 });
 //an endpoint for a registration page, if logged in, send to /urls
 app.get("/registration", (req, res) => {
-  if (req.cookies.username) res.redirect('/urls');
+  if (req.cookies.id) res.redirect('/urls');
   const templateVars = {
     id: req.cookies.id,
     urls: urlDatabse
@@ -143,31 +158,37 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 //a login POST
 app.post("/login", (req, res) => {
-  for (let key in users) {
-    if (req.body.user_email === users[key].email && req.body.password === users[key].password) {
-      res.cookie('id', users[key]);
+  if (checkUserCredentials(req.body.password, req.body.user_email)) {
+    for(const key in users) {
+      if (req.body.user_email === users[key].email) {
+        res.cookie('id', users[key]);
+      }
     }
   }
   res.redirect('/urls');
 });
 //a logout POST
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('id');
   res.redirect('/urls');
 });
 //Register a user to the browser for now
 app.post("/registration/create", (req, res) => {
   const id = generateRandomString();
-  
+  //if user is logged in, they cannot create a new login
   if (!users.id) {
-    const username = req.body.username;
+    //if registration is not filled out or email is already in use, send error
+    if (!req.body.user_email || !req.body.password) {
+      res.sendStatus(400);
+    } else if (checkUserEmail(req.body.user_email)) {
+      res.sendStatus(400);
+    }
     users[id] = {
       id,
-      username,
       email: req.body.user_email,
       password: req.body.password
     };
-    res.cookie('username', req.body['username']);
+    res.cookie('id', req.body['id']);
     res.redirect('/urls');
     return;
   } else res.redirect('/registration');
