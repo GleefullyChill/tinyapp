@@ -69,7 +69,12 @@ app.get("/u/:shortURL", (req, res) => {
 });
 //where the details of the shorturls lives, including a way to edit where they go
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabse[req.params.shortURL]};//longURL/* What goes here? */ };
+  const templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabse[req.params.shortURL],
+    username: req.cookies["username"]
+    
+  };//longURL/* What goes here? */ };
   res.render("urls_show", templateVars);
 });
 //after creating a new shortURL it redirects to the shorURL's respective /url
