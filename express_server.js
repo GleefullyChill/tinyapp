@@ -58,6 +58,13 @@ app.get("/urls/new", (req, res) => {
   }
   res.render("urls_new", templateVars);
 });
+//an endpoint for a registration page
+app.get("/registration", (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"]
+  }
+  res.render("user_register", templateVars);
+});
 //redirects the shortURL from its respective /url to the corresponding web addreess
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabse[req.params.shortURL];
