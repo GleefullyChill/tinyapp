@@ -11,19 +11,29 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-    <% if (!username) { %>
-    <form class="d-flex" method="POST" action="/login">
-      <input class="form-control me-2" type="text" name="username" placeholder="Username">
-      <button type="submit" class="btn btn-outline-dark">login</button>
-    </form>
+  <div class="navbar-text">
+    <% if (!id) { %>
+      <form class="form-inline" method="POST" action="/login">
+        <input class="form-control me-2" type="text" name="email" placeholder="Email">
+        <div class="form-inline m3">
+        <input class="form-control me-2" type="password" name="password" placeholder="Password">
+        <div class="form-inline m3">
+        <button type="submit" class="btn btn-outline-dark">login</button>
+      </form>
+  </div>
+        <a href="/registration" id="registration" for="registration">
+          <button action="/registration" id="registration" for="registration" type="button" class="btn btn-outline-dark">Register</button>
+        </a>
     <% } else { %>
-      <div>Logged In As: <%= username%>!
+      <div class="navbar-text pe3">
+        Logged In As: <%= email %>!          
+      </div>
         <form class="d-flex" method="POST" action="/logout">
           <input type="hidden">
           <button type="submit" class="btn btn-outline-dark">logout</button>
         </form>
-      </div>
     <% } %>
+  </div>
   </nav>
 </div>
 </header>
