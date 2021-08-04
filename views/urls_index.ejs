@@ -24,6 +24,7 @@
         </tr>
       </thead>
       <tbody>
+        <% if (username) { %>
         <% for(let url in urls) { %>
           <tr>
             <td><!--Made the short url on the /urls page link to its respective /url-->
@@ -44,6 +45,7 @@
               </form>
             </td>
           </tr>
+        <% } %>
         <% } %>
       </tbody>
     </table>
