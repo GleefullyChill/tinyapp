@@ -24,27 +24,32 @@
         </tr>
       </thead>
       <tbody>
-        <% if (id) { %>
-        <% for(let url in urls) { %>
-          <tr>
-            <td><!--Made the short url on the /urls page link to its respective /url-->
-              <a href="/urls/<%= url %>"><%= url %></a>
+        <% if (users[id] !== undefined) { %>
+        <% for(let shorturl in urls) { %>
+         <!--show each url that matches the id of the cookies -->
+            <!--Made the short url on the /urls page link to its respective /url-->
+              <% if (id === urls[shorturl]['id']) { %>
+        <tr>
+          <td>
+              <a href="/urls/<%= shorturl %>"><%= shorturl %></a>
               
             </td>
-            <td><%= urls[url] %></td>
-            <td><!--created an edit button and a delete button?-->
-              <a href="/urls/<%= url %>">
+            <td><%= urls[shorturl]['longURL'] %></td>
+            <!--created an edit button and a delete button?-->
+            <td> 
+              <a href="/urls/<%= shorturl %>">
                 <button type="submit" class="btn btn-warning">Edit</button>
               </a>
             </td>
             <td>
-              <form method="POST" action="/urls/<%= url %>/delete">
+              <form method="POST" action="/urls/<%= shorturl %>/delete">
                 <button type="submit" class="btn btn-danger">Delete
                 <input type="hidden" name="url">
                 </button>
               </form>
             </td>
           </tr>
+          <% } %>
         <% } %>
         <% } %>
       </tbody>

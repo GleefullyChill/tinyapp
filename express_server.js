@@ -55,15 +55,32 @@ const checkUserCredentials = function(pasword, email) {
   }
   return false;
 };
+const urlsForUser = function() {
+  const id = req.cookies.id;
+  const urls = {}
+  //loop through and get each shortURL/longURL pair
+  for (const shortURL in urlDatabse) {
+    if(urlDatabse[shortURL]['id'] === id) {
+      urls[shortURL] = urlDatabse[shortURL].longURL;
+    }
+  }
+  return urls;
+}
 //databases should be moved to a separate file
 //holds data on urls and their respective short URLS
 const urlDatabse = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    id: 'RandomID'
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    id: 'RandomID2'
+  }
 };
 //holds user information, including username, email, and password
 const users = {
-  RandomeID: {
+  RandomID: {
     id: 'RandomID',
     email: 'ipj@mt.g',
     password: 'jund4lyfe'
@@ -88,18 +105,19 @@ app.get("/", (req, res) => {
 //allows for a json of the urls in the database, add a login feature to hide
 app.get("/urls.json", (req, res) => {
 
-  res.json(urlDatabse[users[req.cookies.id].id]);
+  res.json(urlDatabse);
 });
-//unnecessary, but harmless
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
+// //unnecessary, but harmless
+// app.get("/hello", (req, res) => {
+//   res.send("<html><body>Hello <b>World</b></body></html>\n");
+// });
 
 //a place to browse the short URLs and where they lead, currently acts a starting/ending page
 app.get("/urls", (req, res) => {
+  const urls = urlsForUser();
   const templateVars = {
     id: req.cookies.id,
-    urls: urlDatabse,
+    urls,
     users
   };
   res.render('urls_index', templateVars);
@@ -117,7 +135,6 @@ app.get("/registration", (req, res) => {
   if (req.cookies.id) res.redirect('/urls');
   const templateVars = {
     id: req.cookies.id,
-    urls: urlDatabse,
     users
   };
   res.render("user_register", templateVars);
@@ -126,14 +143,13 @@ app.get("/login", (req, res) => {
   if (req.cookies.id) res.redirect('/urls');
   const templateVars = {
     id: req.cookies.id,
-    urls: urlDatabse,
     users
   };
   res.render("/user_login", templateVars)
 });
 //redirects the shortURL from its respective /url to the corresponding web addreess
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabse[req.params.shortURL];
+  const longURL = urlDatabse[req.params.shortURL].longURL;
   if (longURL === undefined) {
     res.redirect('/urls');
   } else {
@@ -142,11 +158,13 @@ app.get("/u/:shortURL", (req, res) => {
 });
 //where the details of the shorturls lives, including a way to edit where they go
 app.get("/urls/:shortURL", (req, res) => {
+  const urls = urlsForUser();
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabse[req.params.shortURL],
+    longURL: urlDatabse[req.params.shortURL].longURL,
     id: req.cookies.id,
-    users
+    users,
+    urls
     
   };//longURL/* What goes here? */ };
   res.render("urls_show", templateVars);
@@ -156,17 +174,28 @@ app.get("/urls/:shortURL", (req, res) => {
 //after creating a new shortURL it redirects to the shorURL's respective /url
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
-  urlDatabse[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = {
+    longURL: req.body.longURL,
+    id: req.cookies.id
+  };
   res.redirect(`/urls/${shortURL}`);
 });
 //edit where the short url links to from the short url's description page
 app.post("/urls/:shortURL/Edit", (req, res) => {
+  const urls = urlsForUser();
+  if (urls[shortURL] === undefined) return res.sendStatus(404);
   const shortURL = req.params.shortURL;
-  urlDatabse[shortURL] = req.body.longURL;
+  urlDatabse[shortURL] = {
+    longURL: req.body.longURL,
+    id: req.cookies.id
+  };
   res.redirect(`/urls/${shortURL}`);
 });
 //should delete the respective shortURL
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const urls = urlsForUser();
+  if (urls[shortURL] === undefined) return res.sendStatus(404);
+
   delete urlDatabse[req.params['shortURL']];
   res.redirect(`/urls`);
 });

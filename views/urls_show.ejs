@@ -12,7 +12,7 @@
   </header>
 
   <div class="card text-center">
-    <% if (id) { %>
+    <% if (users[id] !== undefined) { %>
       <div class="card-header"></div>
       <div class="card-body">
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
