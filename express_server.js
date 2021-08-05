@@ -6,11 +6,13 @@ const PORT = 4321;
 //const { signedCookies } = require('cookie-parser');
 const cookieParser = require('cookie-parser');
 const express = require('express');
+const bcrypt = require('bcrypt');
 const morgan = require('morgan');
-const morganDev = morgan('dev');
+
 
 //MiddleWare Functionality
 
+const morganDev = morgan('dev');
 const app = express();
 app.use(morganDev);
 app.use(cookieParser());
@@ -36,24 +38,16 @@ const generateRandomString = function() {
   }
   return str;
 };
-//check email against user information
-const checkUserEmail = function(email) {
+//check email, password against user information and return user
+const checkIfUserID = function(email, password) {
+  //go through each of the ids
   for (const user in users) {
+    //check emails validity, also makes certain that that is the right password to compare
     if (email === users[user].email) {
-      return true;
-    }
-  }
-  return false;
-};
-//check password, maybe email, against user information
-const checkIfUserID = function(password, email) {
-  for (const user in users) {
-    console.log('user', user, 'users', users);
-    if (password === users[user].password) {
-      if (!email) return true;
-      else if (email === users[user].email) {
-        return user;
-      }
+      //allows for a email only check that returns undefined, not id
+      if (!password) return;
+      //returns id for use in cookie validation
+      else if (bcrypt.compareSync(password, users[user].password)) return user;
     }
   }
   return false;
@@ -85,7 +79,7 @@ const users = {
   'RandomID': {
     id: 'RandomID',
     email: 'ipj@mt.g',
-    password: 'jund4lyfe'
+    password: 'jund4lyfe'//new passwords are hashed
   },
   'RandomID2': {
     id: 'RandomID2',
@@ -203,12 +197,14 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 //a login POST
 app.post("/login", (req, res) => {
   if (req.cookies.id) res.clearCookie('id');
-  const id = checkIfUserID(req.body.password, req.body.user_email);
-  //check if the user exists and the password matches
+  //check the users object for matching information and return the id
+  const id = checkIfUserID(req.body.user_email, req.body.password);
   if (id) {
+    //log in the cookie and redirect ot /urls
     res.cookie('id', id)
+    res.redirect('/urls');
+    //if id returns false or undefined, send forbidden status
   } else return res.sendStatus(403);
-  res.redirect('/urls');
 });
 //a logout POST
 app.post("/logout", (req, res) => {
@@ -219,23 +215,30 @@ app.post("/logout", (req, res) => {
 app.post("/registration/create", (req, res) => {
   const id = generateRandomString();
   //if user is logged in, they cannot create a new login
-  if (users.id) return res.redirect('/registration');
-    //if registration is not filled out or email is already in use, send error
-    if (!req.body.user_email || !req.body.password) {
-      return res.sendStatus(400);
-    } else if (checkUserEmail(req.body.user_email)) {
-      return res.sendStatus(400);
-    }
-    //create a object named after the randoms string and put it inside the users object
-    users[id] = {
-      id,
-      email: req.body.user_email,
-      password: req.body.password
-    };
-    //create a cookie for the user and redirect to /urls
-    res.cookie('id', id);
-    res.redirect('/urls');
-    return;
+  if (users.id) return res.redirect('/urls');
+  //if registration is not filled out, send error
+  else if (!req.body.user_email || !req.body.password) return res.sendStatus(400);
+  //if email is in use, send error
+  else if (checkIfUserID(req.body.user_email) === false) return res.sendStatus(400);
+  //create a object named after the randoms string and put it inside the users object
+  else {
+    //hash the password
+    bcrypt.genSalt(10)
+      .then((salt) => {
+        return bcrypt.hash(req.body.password, salt)
+      })
+      //create a new object in the users object, using the hashed password
+      .then((password) => {
+        users[id] = {
+          email: req.body.user_email,
+          id,
+          password
+        }
+          //create a cookie for the user to skip logging in after registering and redirect to /urls
+          res.cookie('id', id);
+          res.redirect('/urls');
+      })
+  }
 });
 
 
