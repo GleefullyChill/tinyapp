@@ -8,6 +8,7 @@ const cookieParser = require('cookie-parser');
 const express = require('express');
 const bcrypt = require('bcrypt');
 const morgan = require('morgan');
+const cookieSession
 
 
 //MiddleWare Functionality
@@ -20,7 +21,7 @@ app.use(express.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
 
 //Functions should be moved to a separate .js file
-
+//generates a random string of 6 characters
 const generateRandomString = function() {
   let str = "";
   for (let i = 0; i < 6; i++) {
@@ -45,13 +46,14 @@ const checkIfUserID = function(email, password) {
     //check emails validity, also makes certain that that is the right password to compare
     if (email === users[user].email) {
       //allows for a email only check that returns undefined, not id
-      if (!password) return;
+      if (!password) return undefined;
       //returns id for use in cookie validation
       else if (bcrypt.compareSync(password, users[user].password)) return user;
     }
   }
   return false;
 };
+//uses cookie data to check which urls have been created by the logged in user
 const urlsForUser = function(id) {
   const urls = {};
   //loop through and get each shortURL/longURL pair
@@ -75,11 +77,13 @@ const urlDatabase = {
   }
 };
 //holds user information, including username, email, and password
+//id's inside do not work anymore as they are not stored as hashes
+//can allow for these users to re-register, potentially
 const users = {
   'RandomID': {
     id: 'RandomID',
     email: 'ipj@mt.g',
-    password: 'jund4lyfe'//new passwords are hashed
+    password: 'jund4lyfe'
   },
   'RandomID2': {
     id: 'RandomID2',
@@ -219,7 +223,7 @@ app.post("/registration/create", (req, res) => {
   //if registration is not filled out, send error
   else if (!req.body.user_email || !req.body.password) return res.sendStatus(400);
   //if email is in use, send error
-  else if (checkIfUserID(req.body.user_email) === false) return res.sendStatus(400);
+  else if (checkIfUserID(req.body.user_email) === undefined) return res.sendStatus(400);
   //create a object named after the randoms string and put it inside the users object
   else {
     //hash the password
@@ -234,6 +238,7 @@ app.post("/registration/create", (req, res) => {
           id,
           password
         }
+        console.log(users[id])
           //create a cookie for the user to skip logging in after registering and redirect to /urls
           res.cookie('id', id);
           res.redirect('/urls');
