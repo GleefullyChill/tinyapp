@@ -14,7 +14,7 @@
   <div class="navbar-nav ml-auto my-auto">
     <% if (users[id] === undefined) { %>
       <a href="/login" class="nav-item nav-link">
-        <button type="button" class="btn btn-outline-dark">login</button>
+        <button type="button" class="btn btn-outline-dark mx-2">login</button>
       </a>
   
         <a href="/registration" class="nav-item nav-link">
@@ -24,7 +24,7 @@
       <div class="form-inline">
         Logged In As: <%= users[id].email %>!          
       
-        <form method="POST" action="/logout">
+        <form method="POST" action="/logout" class="nav-item nav-link">
           <input type="hidden">
           <button type="submit" class="btn btn-outline-dark mx-2">logout</button>
         </form>

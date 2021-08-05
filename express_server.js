@@ -46,12 +46,14 @@ const checkUserEmail = function(email) {
   return false;
 };
 //check password, maybe email, against user information
-const checkUserCredentials = function(password, email) {
+const checkIfUserID = function(password, email) {
   for (const user in users) {
     console.log('user', user, 'users', users);
     if (password === users[user].password) {
       if (!email) return true;
-      else if (email === users[user].email) return true;
+      else if (email === users[user].email) {
+        return user;
+      }
     }
   }
   return false;
@@ -201,12 +203,10 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 //a login POST
 app.post("/login", (req, res) => {
   if (req.cookies.id) res.clearCookie('id');
-  if (checkUserCredentials(req.body.password, req.body.user_email)) {
-    for (const key in users) {
-      if (req.body.user_email === users[key].email) {
-        res.cookie('id', key);
-      }
-    }
+  const id = checkIfUserID(req.body.password, req.body.user_email);
+  //check if the user exists and the password matches
+  if (id) {
+    res.cookie('id', id)
   } else return res.sendStatus(403);
   res.redirect('/urls');
 });
@@ -219,23 +219,23 @@ app.post("/logout", (req, res) => {
 app.post("/registration/create", (req, res) => {
   const id = generateRandomString();
   //if user is logged in, they cannot create a new login
-  if (!users.id) {
+  if (users.id) return res.redirect('/registration');
     //if registration is not filled out or email is already in use, send error
     if (!req.body.user_email || !req.body.password) {
       return res.sendStatus(400);
     } else if (checkUserEmail(req.body.user_email)) {
       return res.sendStatus(400);
     }
+    //create a object named after the randoms string and put it inside the users object
     users[id] = {
       id,
       email: req.body.user_email,
       password: req.body.password
     };
-    console.log(users);
+    //create a cookie for the user and redirect to /urls
     res.cookie('id', id);
     res.redirect('/urls');
     return;
-  } else res.redirect('/registration');
 });
 
 
