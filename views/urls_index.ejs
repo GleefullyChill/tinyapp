@@ -28,13 +28,12 @@
         <% for(let shorturl in urls) { %>
          <!--show each url that matches the id of the cookies -->
             <!--Made the short url on the /urls page link to its respective /url-->
-              <% if (id === urls[shorturl]['id']) { %>
         <tr>
           <td>
               <a href="/urls/<%= shorturl %>"><%= shorturl %></a>
               
             </td>
-            <td><%= urls[shorturl]['longURL'] %></td>
+            <td><%= urls[shorturl] %></td>
             <!--created an edit button and a delete button?-->
             <td> 
               <a href="/urls/<%= shorturl %>">
@@ -49,8 +48,9 @@
               </form>
             </td>
           </tr>
-          <% } %>
         <% } %>
+        <% } else {%>
+          <h5 class="card-title">Please Login or Register</h5>
         <% } %>
       </tbody>
     </table>

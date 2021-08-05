@@ -46,29 +46,29 @@ const checkUserEmail = function(email) {
   return false;
 };
 //check password, maybe email, against user information
-const checkUserCredentials = function(pasword, email) {
+const checkUserCredentials = function(password, email) {
   for (const user in users) {
-    if (pasword === users[user].pasword) {
+    console.log('user', user, 'users', users);
+    if (password === users[user].password) {
       if (!email) return true;
       else if (email === users[user].email) return true;
     }
   }
   return false;
 };
-const urlsForUser = function() {
-  const id = req.cookies.id;
-  const urls = {}
+const urlsForUser = function(id) {
+  const urls = {};
   //loop through and get each shortURL/longURL pair
-  for (const shortURL in urlDatabse) {
-    if(urlDatabse[shortURL]['id'] === id) {
-      urls[shortURL] = urlDatabse[shortURL].longURL;
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL]['id'] === id) {
+      urls[shortURL] = urlDatabase[shortURL].longURL;
     }
   }
   return urls;
-}
+};
 //databases should be moved to a separate file
 //holds data on urls and their respective short URLS
-const urlDatabse = {
+const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
     id: 'RandomID'
@@ -80,17 +80,17 @@ const urlDatabse = {
 };
 //holds user information, including username, email, and password
 const users = {
-  RandomID: {
+  'RandomID': {
     id: 'RandomID',
     email: 'ipj@mt.g',
     password: 'jund4lyfe'
   },
-  RandomID2: {
+  'RandomID2': {
     id: 'RandomID2',
     email: 'no@mt.g',
     password: 'ISayNo'
   },
-  RandomID3: {
+  'RandomID3': {
     id: 'RandomID3',
     email: 'bio@mt.g',
     password: 'biotech'
@@ -105,7 +105,7 @@ app.get("/", (req, res) => {
 //allows for a json of the urls in the database, add a login feature to hide
 app.get("/urls.json", (req, res) => {
 
-  res.json(urlDatabse);
+  res.json(urlDatabase);
 });
 // //unnecessary, but harmless
 // app.get("/hello", (req, res) => {
@@ -114,7 +114,7 @@ app.get("/urls.json", (req, res) => {
 
 //a place to browse the short URLs and where they lead, currently acts a starting/ending page
 app.get("/urls", (req, res) => {
-  const urls = urlsForUser();
+  const urls = urlsForUser(req.cookies.id);
   const templateVars = {
     id: req.cookies.id,
     urls,
@@ -140,16 +140,15 @@ app.get("/registration", (req, res) => {
   res.render("user_register", templateVars);
 });
 app.get("/login", (req, res) => {
-  if (req.cookies.id) res.redirect('/urls');
   const templateVars = {
     id: req.cookies.id,
     users
   };
-  res.render("/user_login", templateVars)
+  res.render("user_login", templateVars);
 });
 //redirects the shortURL from its respective /url to the corresponding web addreess
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabse[req.params.shortURL].longURL;
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   if (longURL === undefined) {
     res.redirect('/urls');
   } else {
@@ -158,10 +157,10 @@ app.get("/u/:shortURL", (req, res) => {
 });
 //where the details of the shorturls lives, including a way to edit where they go
 app.get("/urls/:shortURL", (req, res) => {
-  const urls = urlsForUser();
+  const urls = urlsForUser(req.cookies.id);
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabse[req.params.shortURL].longURL,
+    longURL: urlDatabase[req.params.shortURL].longURL,
     id: req.cookies.id,
     users,
     urls
@@ -182,10 +181,10 @@ app.post("/urls", (req, res) => {
 });
 //edit where the short url links to from the short url's description page
 app.post("/urls/:shortURL/Edit", (req, res) => {
-  const urls = urlsForUser();
-  if (urls[shortURL] === undefined) return res.sendStatus(404);
+  const urls = urlsForUser(req.cookies.id);
   const shortURL = req.params.shortURL;
-  urlDatabse[shortURL] = {
+  if (urls[shortURL] === undefined) return res.sendStatus(403);
+  urlDatabase[shortURL] = {
     longURL: req.body.longURL,
     id: req.cookies.id
   };
@@ -193,19 +192,19 @@ app.post("/urls/:shortURL/Edit", (req, res) => {
 });
 //should delete the respective shortURL
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const urls = urlsForUser();
-  if (urls[shortURL] === undefined) return res.sendStatus(404);
+  const urls = urlsForUser(req.cookies.id);
+  if (urls[req.params['shortURL']] === undefined) return res.sendStatus(403);
 
-  delete urlDatabse[req.params['shortURL']];
+  delete urlDatabase[req.params['shortURL']];
   res.redirect(`/urls`);
 });
 //a login POST
 app.post("/login", (req, res) => {
+  if (req.cookies.id) res.clearCookie('id');
   if (checkUserCredentials(req.body.password, req.body.user_email)) {
     for (const key in users) {
       if (req.body.user_email === users[key].email) {
-        console.log('user.key: ', user[key])
-        res.cookie('id', users[key]);
+        res.cookie('id', key);
       }
     }
   } else return res.sendStatus(403);
@@ -232,7 +231,7 @@ app.post("/registration/create", (req, res) => {
       email: req.body.user_email,
       password: req.body.password
     };
-    console.log(users)
+    console.log(users);
     res.cookie('id', id);
     res.redirect('/urls');
     return;
