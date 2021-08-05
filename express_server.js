@@ -4,11 +4,10 @@ const PORT = 4321;
 
 //use node_modules dependencies
 //const { signedCookies } = require('cookie-parser');
-const cookieParser = require('cookie-parser');
 const express = require('express');
 const bcrypt = require('bcrypt');
 const morgan = require('morgan');
-const cookieSession
+const cookieSession = require('cookie-session');
 
 
 //MiddleWare Functionality
@@ -16,8 +15,11 @@ const cookieSession
 const morganDev = morgan('dev');
 const app = express();
 app.use(morganDev);
-app.use(cookieParser());
 app.use(express.urlencoded({extended: true}));
+app.use(cookieSession({
+  name: 'sessionBant',
+  keys: ['thewayisagreatsongaboutroadasisstedsuicide','P4bWnjki8842&lM']
+}));
 app.set('view engine', 'ejs');
 
 //Functions should be moved to a separate .js file
@@ -114,9 +116,9 @@ app.get("/urls.json", (req, res) => {
 
 //a place to browse the short URLs and where they lead, currently acts a starting/ending page
 app.get("/urls", (req, res) => {
-  const urls = urlsForUser(req.cookies.id);
+  const urls = urlsForUser(req.session.id);
   const templateVars = {
-    id: req.cookies.id,
+    id: req.session.id,
     urls,
     users
   };
@@ -125,23 +127,23 @@ app.get("/urls", (req, res) => {
 //create a new short URL here
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    id: req.cookies.id,
+    id: req.session.id,
     users
   };
   res.render("urls_new", templateVars);
 });
 //an endpoint for a registration page, if logged in, send to /urls
 app.get("/registration", (req, res) => {
-  if (req.cookies.id) res.redirect('/urls');
+  if (req.session.id) res.redirect('/urls');
   const templateVars = {
-    id: req.cookies.id,
+    id: req.session.id,
     users
   };
   res.render("user_register", templateVars);
 });
 app.get("/login", (req, res) => {
   const templateVars = {
-    id: req.cookies.id,
+    id: req.session.id,
     users
   };
   res.render("user_login", templateVars);
@@ -157,11 +159,11 @@ app.get("/u/:shortURL", (req, res) => {
 });
 //where the details of the shorturls lives, including a way to edit where they go
 app.get("/urls/:shortURL", (req, res) => {
-  const urls = urlsForUser(req.cookies.id);
+  const urls = urlsForUser(req.session.id);
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
-    id: req.cookies.id,
+    id: req.session.id,
     users,
     urls
     
@@ -175,24 +177,24 @@ app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    id: req.cookies.id
+    id: req.session.id
   };
   res.redirect(`/urls/${shortURL}`);
 });
 //edit where the short url links to from the short url's description page
 app.post("/urls/:shortURL/Edit", (req, res) => {
-  const urls = urlsForUser(req.cookies.id);
+  const urls = urlsForUser(req.session.id);
   const shortURL = req.params.shortURL;
   if (urls[shortURL] === undefined) return res.sendStatus(403);
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    id: req.cookies.id
+    id: req.session.id
   };
   res.redirect(`/urls/${shortURL}`);
 });
 //should delete the respective shortURL
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const urls = urlsForUser(req.cookies.id);
+  const urls = urlsForUser(req.session.id);
   if (urls[req.params['shortURL']] === undefined) return res.sendStatus(403);
 
   delete urlDatabase[req.params['shortURL']];
@@ -200,19 +202,19 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 //a login POST
 app.post("/login", (req, res) => {
-  if (req.cookies.id) res.clearCookie('id');
+  if (req.session.id) req.session = null;
   //check the users object for matching information and return the id
   const id = checkIfUserID(req.body.user_email, req.body.password);
   if (id) {
     //log in the cookie and redirect ot /urls
-    res.cookie('id', id)
+    req.session.id = id;
     res.redirect('/urls');
     //if id returns false or undefined, send forbidden status
   } else return res.sendStatus(403);
 });
 //a logout POST
 app.post("/logout", (req, res) => {
-  res.clearCookie('id');
+  req.session = null;
   res.redirect('/urls');
 });
 //Register a user to the browser for now
@@ -229,7 +231,7 @@ app.post("/registration/create", (req, res) => {
     //hash the password
     bcrypt.genSalt(10)
       .then((salt) => {
-        return bcrypt.hash(req.body.password, salt)
+        return bcrypt.hash(req.body.password, salt);
       })
       //create a new object in the users object, using the hashed password
       .then((password) => {
@@ -237,12 +239,12 @@ app.post("/registration/create", (req, res) => {
           email: req.body.user_email,
           id,
           password
-        }
-        console.log(users[id])
-          //create a cookie for the user to skip logging in after registering and redirect to /urls
-          res.cookie('id', id);
-          res.redirect('/urls');
-      })
+        };
+        console.log(users[id]);
+        //create a cookie for the user to skip logging in after registering and redirect to /urls
+        req.session.id = id;
+        res.redirect('/urls');
+      });
   }
 });
 
