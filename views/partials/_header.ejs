@@ -13,25 +13,22 @@
     </div>
   <div class="navbar-text">
     <% if (!id) { %>
-      <form class="form-inline" method="POST" action="/login">
-        <input class="form-control me-2" type="text" name="email" placeholder="Email">
-        <div class="form-inline m3">
-        <input class="form-control me-2" type="password" name="password" placeholder="Password">
-        <div class="form-inline m3">
-        <button type="submit" class="btn btn-outline-dark">login</button>
-      </form>
+      <a class="form-inline" href="/login">
+        <button type="button" class="btn btn-outline-dark">login</button>
+      </a>
   </div>
-        <a href="/registration" id="registration" for="registration">
-          <button action="/registration" id="registration" for="registration" type="button" class="btn btn-outline-dark">Register</button>
+        <a href="/registration">
+          <button action="/registration" type="button" class="btn btn-outline-dark">Register</button>
         </a>
     <% } else { %>
-      <div class="navbar-text pe3">
-        Logged In As: <%= email %>!          
-      </div>
+      <div class="form-inline">
+        Logged In As: <%= user.id.email %>!          
+      
         <form class="d-flex" method="POST" action="/logout">
           <input type="hidden">
           <button type="submit" class="btn btn-outline-dark">logout</button>
         </form>
+      </div>
     <% } %>
   </div>
   </nav>

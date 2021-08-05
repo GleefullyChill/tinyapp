@@ -87,7 +87,8 @@ app.get("/", (req, res) => {
 });
 //allows for a json of the urls in the database, add a login feature to hide
 app.get("/urls.json", (req, res) => {
-  res.json(urlDatabse);
+
+  res.json(urlDatabse[users[req.cookies.id].id]);
 });
 //unnecessary, but harmless
 app.get("/hello", (req, res) => {
@@ -97,15 +98,17 @@ app.get("/hello", (req, res) => {
 //a place to browse the short URLs and where they lead, currently acts a starting/ending page
 app.get("/urls", (req, res) => {
   const templateVars = {
-    id: req.cookies["id"],
-    id: req.cookies.id
+    id: req.cookies.id,
+    urls: urlDatabse,
+    users
   };
   res.render('urls_index', templateVars);
 });
 //create a new short URL here
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    id: req.cookies.id
+    id: req.cookies.id,
+    users
   };
   res.render("urls_new", templateVars);
 });
@@ -114,10 +117,20 @@ app.get("/registration", (req, res) => {
   if (req.cookies.id) res.redirect('/urls');
   const templateVars = {
     id: req.cookies.id,
-    urls: urlDatabse
+    urls: urlDatabse,
+    users
   };
   res.render("user_register", templateVars);
 });
+app.get("/login", (req, res) => {
+  if (req.cookies.id) res.redirect('/urls');
+  const templateVars = {
+    id: req.cookies.id,
+    urls: urlDatabse,
+    users
+  };
+  res.render("/login", templateVars)
+})
 //redirects the shortURL from its respective /url to the corresponding web addreess
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabse[req.params.shortURL];
@@ -132,7 +145,8 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabse[req.params.shortURL],
-    id: req.cookies.id
+    id: req.cookies.id,
+    users
     
   };//longURL/* What goes here? */ };
   res.render("urls_show", templateVars);
@@ -159,7 +173,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 //a login POST
 app.post("/login", (req, res) => {
   if (checkUserCredentials(req.body.password, req.body.user_email)) {
-    for(const key in users) {
+    for (const key in users) {
       if (req.body.user_email === users[key].email) {
         res.cookie('id', users[key]);
       }
@@ -188,7 +202,7 @@ app.post("/registration/create", (req, res) => {
       email: req.body.user_email,
       password: req.body.password
     };
-    res.cookie('id', req.body['id']);
+    res.cookie('id', id);
     res.redirect('/urls');
     return;
   } else res.redirect('/registration');
