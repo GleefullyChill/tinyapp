@@ -129,8 +129,8 @@ app.get("/login", (req, res) => {
     urls: urlDatabse,
     users
   };
-  res.render("/login", templateVars)
-})
+  res.render("/user_login", templateVars)
+});
 //redirects the shortURL from its respective /url to the corresponding web addreess
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabse[req.params.shortURL];
@@ -175,10 +175,11 @@ app.post("/login", (req, res) => {
   if (checkUserCredentials(req.body.password, req.body.user_email)) {
     for (const key in users) {
       if (req.body.user_email === users[key].email) {
+        console.log('user.key: ', user[key])
         res.cookie('id', users[key]);
       }
     }
-  }
+  } else return res.sendStatus(403);
   res.redirect('/urls');
 });
 //a logout POST
@@ -193,15 +194,16 @@ app.post("/registration/create", (req, res) => {
   if (!users.id) {
     //if registration is not filled out or email is already in use, send error
     if (!req.body.user_email || !req.body.password) {
-      res.sendStatus(400);
+      return res.sendStatus(400);
     } else if (checkUserEmail(req.body.user_email)) {
-      res.sendStatus(400);
+      return res.sendStatus(400);
     }
     users[id] = {
       id,
       email: req.body.user_email,
       password: req.body.password
     };
+    console.log(users)
     res.cookie('id', id);
     res.redirect('/urls');
     return;

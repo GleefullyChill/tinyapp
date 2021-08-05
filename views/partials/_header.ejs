@@ -12,8 +12,8 @@
       </div>
     </div>
   <div class="navbar-text">
-    <% if (!id) { %>
-      <a class="form-inline" href="/login">
+    <% if (users[id] === undefined) { %>
+      <a href="/login">
         <button type="button" class="btn btn-outline-dark">login</button>
       </a>
   </div>
@@ -22,7 +22,7 @@
         </a>
     <% } else { %>
       <div class="form-inline">
-        Logged In As: <%= user.id.email %>!          
+        Logged In As: <%= users[id].email %>!          
       
         <form class="d-flex" method="POST" action="/logout">
           <input type="hidden">
