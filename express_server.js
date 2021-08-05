@@ -1,9 +1,8 @@
 const PORT = 4321;
 
 //PATHS to files would go here
-
+const { generateRandomString, checkUserIdByEmail, urlsForUser} = require('./helpers')
 //use node_modules dependencies
-//const { signedCookies } = require('cookie-parser');
 const express = require('express');
 const bcrypt = require('bcrypt');
 const morgan = require('morgan');
@@ -22,50 +21,6 @@ app.use(cookieSession({
 }));
 app.set('view engine', 'ejs');
 
-//Functions should be moved to a separate .js file
-//generates a random string of 6 characters
-const generateRandomString = function() {
-  let str = "";
-  for (let i = 0; i < 6; i++) {
-    let char = Math.random() * 61;
-    char = Math.floor(char);
-    if (char < 10) {
-      str += char;
-    } else if (char > 35) {
-      char = String.fromCharCode(char + 29);
-      str += char;
-    } else {
-      char = String.fromCharCode(char + 87);
-      str += char;
-    }
-  }
-  return str;
-};
-//check email, password against user information and return user
-const checkIfUserID = function(email, password) {
-  //go through each of the ids
-  for (const user in users) {
-    //check emails validity, also makes certain that that is the right password to compare
-    if (email === users[user].email) {
-      //allows for a email only check that returns undefined, not id
-      if (!password) return undefined;
-      //returns id for use in cookie validation
-      else if (bcrypt.compareSync(password, users[user].password)) return user;
-    }
-  }
-  return false;
-};
-//uses cookie data to check which urls have been created by the logged in user
-const urlsForUser = function(id) {
-  const urls = {};
-  //loop through and get each shortURL/longURL pair
-  for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL]['id'] === id) {
-      urls[shortURL] = urlDatabase[shortURL].longURL;
-    }
-  }
-  return urls;
-};
 //databases should be moved to a separate file
 //holds data on urls and their respective short URLS
 const urlDatabase = {
@@ -116,7 +71,7 @@ app.get("/urls.json", (req, res) => {
 
 //a place to browse the short URLs and where they lead, currently acts a starting/ending page
 app.get("/urls", (req, res) => {
-  const urls = urlsForUser(req.session.id);
+  const urls = urlsForUser(req.session.id, urlDatabase);
   const templateVars = {
     id: req.session.id,
     urls,
@@ -159,13 +114,13 @@ app.get("/u/:shortURL", (req, res) => {
 });
 //where the details of the shorturls lives, including a way to edit where they go
 app.get("/urls/:shortURL", (req, res) => {
-  const urls = urlsForUser(req.session.id);
+  const urls = urlsForUser(req.session.id, urlDatabase);
+  if (!urls[req.params.shortURL]) return res.redirect("/urls");
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
     id: req.session.id,
-    users,
-    urls
+    users
     
   };//longURL/* What goes here? */ };
   res.render("urls_show", templateVars);
@@ -183,7 +138,7 @@ app.post("/urls", (req, res) => {
 });
 //edit where the short url links to from the short url's description page
 app.post("/urls/:shortURL/Edit", (req, res) => {
-  const urls = urlsForUser(req.session.id);
+  const urls = urlsForUser(req.session.id, urlDatabase);
   const shortURL = req.params.shortURL;
   if (urls[shortURL] === undefined) return res.sendStatus(403);
   urlDatabase[shortURL] = {
@@ -194,7 +149,7 @@ app.post("/urls/:shortURL/Edit", (req, res) => {
 });
 //should delete the respective shortURL
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const urls = urlsForUser(req.session.id);
+  const urls = urlsForUser(req.session.id, urlDatabase);
   if (urls[req.params['shortURL']] === undefined) return res.sendStatus(403);
 
   delete urlDatabase[req.params['shortURL']];
@@ -204,7 +159,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/login", (req, res) => {
   if (req.session.id) req.session = null;
   //check the users object for matching information and return the id
-  const id = checkIfUserID(req.body.user_email, req.body.password);
+  const id = checkUserIdByEmail(users, req.body.user_email, req.body.password);
   if (id) {
     //log in the cookie and redirect ot /urls
     req.session.id = id;
@@ -225,7 +180,7 @@ app.post("/registration/create", (req, res) => {
   //if registration is not filled out, send error
   else if (!req.body.user_email || !req.body.password) return res.sendStatus(400);
   //if email is in use, send error
-  else if (checkIfUserID(req.body.user_email) === undefined) return res.sendStatus(400);
+  else if (checkUserIdByEmail(users, req.body.user_email) === undefined) return res.sendStatus(400);
   //create a object named after the randoms string and put it inside the users object
   else {
     //hash the password
