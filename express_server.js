@@ -1,7 +1,7 @@
 const PORT = 4321;
 
 //PATHS to files would go here
-const { generateRandomString, checkUserIdByEmail, urlsForUser} = require('./helpers')
+const { generateRandomString, checkUserIdByEmail, urlsForUser} = require('./helpers');
 //use node_modules dependencies
 const express = require('express');
 const bcrypt = require('bcrypt');
@@ -40,7 +40,7 @@ app.get("/", (req, res) => {
 });
 //a place to browse the short URLs and where they lead
 app.get("/urls", (req, res) => {
-  if (!req.session.id) res.status(403).send('403 Access Forbidden:  Please Login to see your TinyApp URLs')
+  if (!req.session.id) res.status(403).send('403 Access Forbidden:  Please Login to see your TinyApp URLs');
   const urls = urlsForUser(req.session.id, urlDatabase);
   const templateVars = {
     id: req.session.id,
@@ -51,7 +51,7 @@ app.get("/urls", (req, res) => {
 });
 //create a new short URL here
 app.get("/urls/new", (req, res) => {
-  if(!req.session.id) return res.redirect('/login');
+  if (!req.session.id) return res.redirect('/login');
   const templateVars = {
     id: req.session.id,
     users
@@ -79,17 +79,21 @@ app.get("/login", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   //if the URL has a valid link, send the visitor along
   if (urlDatabase[req.params.shortURL] === undefined) res.status(400).send('400 Error in Data:  This TinyApp URL no longer exists, please contact creator of the URL, or admin');
-  else res.redirect(urlDatabase[req.params.shortURL].longURL);
+  else {
+    urlDatabase[req.params.shortURL].uses++;
+    res.redirect(urlDatabase[req.params.shortURL].longURL);
+  }
 });
 //where the details of the shorturls lives, including a way to edit where they go
 app.get("/urls/:shortURL", (req, res) => {
   const urls = urlsForUser(req.session.id, urlDatabase);
-  if (!urls[req.params.shortURL]) res.status(404).send('40 Resource Not Found:  That URL is not owned by this user, please login to the relevant user, or contact admin')
+  if (!urls[req.params.shortURL]) res.status(404).send('40 Resource Not Found:  That URL is not owned by this user, please login to the relevant user, or contact admin');
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
     id: req.session.id,
-    users
+    users,
+    urls
     
   };//longURL/* What goes here? */ };
   res.render("urls_show", templateVars);
@@ -98,10 +102,11 @@ app.get("/urls/:shortURL", (req, res) => {
 //Paths fo POST requests
 //after creating a new shortURL it redirects to the shorURL's respective /url
 app.post("/urls", (req, res) => {
-  if (!req.session.id) res.status(400).send('400 Error in Data:  Please Login or Register to create a new TinyApp URL')
+  if (!req.session.id) res.status(400).send('400 Error in Data:  Please Login or Register to create a new TinyApp URL');
   const shortURL = generateRandomString();
   const date = Date();
   urlDatabase[shortURL] = {
+    uses: 0,
     longURL: req.body.longURL,
     id: req.session.id,
     date
@@ -111,7 +116,7 @@ app.post("/urls", (req, res) => {
 //edit where the short url links to from the short url's description page
 app.post("/urls/:shortURL/Edit", (req, res) => {
   //send an error, if not logged in
-  if(!req.session.id) res.status(403).send('403 Access Forbidden:  Please Login to edit this TinyApp URL')
+  if (!req.session.id) res.status(403).send('403 Access Forbidden:  Please Login to edit this TinyApp URL');
   //create an object of shortURL:longURL value pairs attatched to the user
   const urls = urlsForUser(req.session.id, urlDatabase);
   const shortURL = req.params.shortURL;
@@ -119,6 +124,7 @@ app.post("/urls/:shortURL/Edit", (req, res) => {
   //if shortURL is not attached to the user send an error
   if (urls[shortURL] === undefined) res.status(404).send('404 Resource Not Found:  That URL is not owned by this user, please login to the relevant user, or contact admin');
   urlDatabase[shortURL] = {
+    uses: 0,
     longURL: req.body.longURL,
     id: req.session.id,
     date
@@ -128,7 +134,7 @@ app.post("/urls/:shortURL/Edit", (req, res) => {
 //should delete the respective shortURL
 app.post("/urls/:shortURL/delete", (req, res) => {
   //send an error if not logged in
-  if(!req.session.id) res.status(403).send('403 Access Forbidden:  Please Login to delete this TinyApp URL')
+  if (!req.session.id) res.status(403).send('403 Access Forbidden:  Please Login to delete this TinyApp URL');
   //create an object of shortURL:longURL value pairs attatched to the user
   const urls = urlsForUser(req.session.id, urlDatabase);
   //if shortURL is not attached to the user send an error

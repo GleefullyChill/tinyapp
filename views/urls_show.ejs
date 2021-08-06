@@ -7,7 +7,7 @@
 </head>
 
 <body>
-  <header
+  <header>
   <%- include('partials/_header') %>
   </header>
   <div class="card text-center">
@@ -16,6 +16,8 @@
       <div class="card-body">
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
         <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
+        <p class="card-text">Created: <%= urls.info[shortURL].date %></p>
+        <p class="card-text">Number of Uses: <%= urls.info[shortURL].uses %></p>
         <!-- a button to delete the shortURL -->
         <form method="POST" action="/urls/<%= shortURL %>/delete">
           <button type="submit" class="btn btn-danger mx-2">Delete
