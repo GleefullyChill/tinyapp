@@ -4,7 +4,7 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
-!["Register with privacy for password"](./Screenshots/Login_example.png)
+!["Register with privacy for password"](./Screenshots/Login_Example.png)
 
 !["Hold multiple Short URLs"](./Screenshots/Multiple_Short_URLs.png)
 
