@@ -24,53 +24,22 @@ app.set('view engine', 'ejs');
 //databases should be moved to a separate file
 //holds data on urls and their respective short URLS
 const urlDatabase = {
-  "b2xVn2": {
-    longURL: "http://www.lighthouselabs.ca",
-    id: 'RandomID'
-  },
-  "9sm5xK": {
-    longURL: "http://www.google.com",
-    id: 'RandomID2'
-  }
 };
 //holds user information, including username, email, and password
 //id's inside do not work anymore as they are not stored as hashes
 //can allow for these users to re-register, potentially
 const users = {
-  'RandomID': {
-    id: 'RandomID',
-    email: 'ipj@mt.g',
-    password: 'jund4lyfe'
-  },
-  'RandomID2': {
-    id: 'RandomID2',
-    email: 'no@mt.g',
-    password: 'ISayNo'
-  },
-  'RandomID3': {
-    id: 'RandomID3',
-    email: 'bio@mt.g',
-    password: 'biotech'
-  }
 };
 
 //Paths for get requests
 //an empty homepage, redirect or add the header, at least
 app.get("/", (req, res) => {
-  res.send("This is your HOME page!");
+  if (req.session.id) res.redirect('/urls');
+  res.redirect("/login");
 });
-//allows for a json of the urls in the database, add a login feature to hide
-app.get("/urls.json", (req, res) => {
-
-  res.json(urlDatabase);
-});
-// //unnecessary, but harmless
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
-
-//a place to browse the short URLs and where they lead, currently acts a starting/ending page
+//a place to browse the short URLs and where they lead
 app.get("/urls", (req, res) => {
+  if (!req.session.id) res.status(403).send('403 Access Forbidden:  Please Login to see your TinyApp URLs')
   const urls = urlsForUser(req.session.id, urlDatabase);
   const templateVars = {
     id: req.session.id,
@@ -81,6 +50,7 @@ app.get("/urls", (req, res) => {
 });
 //create a new short URL here
 app.get("/urls/new", (req, res) => {
+  if(!req.session.id) return res.redirect('/login');
   const templateVars = {
     id: req.session.id,
     users
@@ -97,6 +67,7 @@ app.get("/registration", (req, res) => {
   res.render("user_register", templateVars);
 });
 app.get("/login", (req, res) => {
+  if (req.session.id) res.redirect('/urls');
   const templateVars = {
     id: req.session.id,
     users
@@ -106,16 +77,14 @@ app.get("/login", (req, res) => {
 //redirects the shortURL from its respective /url to the corresponding web addreess
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
-  if (longURL === undefined) {
-    res.redirect('/urls');
-  } else {
-    res.redirect(longURL);
-  }
+  //if the URL has a valid link, send the visitor along
+  if (longURL === undefined) res.status(400).send('400 Error in Data:  This TinyApp URL no longer exists, please contact creator of the URL, or admin');
+  else res.redirect(longURL);
 });
 //where the details of the shorturls lives, including a way to edit where they go
 app.get("/urls/:shortURL", (req, res) => {
   const urls = urlsForUser(req.session.id, urlDatabase);
-  if (!urls[req.params.shortURL]) return res.redirect("/urls");
+  if (!urls[req.params.shortURL]) res.status(403).send('403 Access Forbidden:  That URL is not owned by this user, please login to the relevant user, or contact admin')
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
@@ -129,6 +98,7 @@ app.get("/urls/:shortURL", (req, res) => {
 //Paths fo POST requests
 //after creating a new shortURL it redirects to the shorURL's respective /url
 app.post("/urls", (req, res) => {
+  if (req.session.id)res.status(400).send('400 Error in Data:  Please Login or Register to create a new TinyApp URL')
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
@@ -138,9 +108,13 @@ app.post("/urls", (req, res) => {
 });
 //edit where the short url links to from the short url's description page
 app.post("/urls/:shortURL/Edit", (req, res) => {
+  //send an error, if not logged in
+  if(!req.session.id) res.status(403).send('403 Access Forbidden:  Please Login to edit this TinyApp URL')
+  //create an object of shortURL:longURL value pairs attatched to the user
   const urls = urlsForUser(req.session.id, urlDatabase);
   const shortURL = req.params.shortURL;
-  if (urls[shortURL] === undefined) return res.sendStatus(403);
+  //if shortURL is not attached to the user send an error
+  if (urls[shortURL] === undefined) res.status(403).send('403 Access Forbidden:  That URL is not owned by this user, please login to the relevant user, or contact admin');
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
     id: req.session.id
@@ -149,14 +123,19 @@ app.post("/urls/:shortURL/Edit", (req, res) => {
 });
 //should delete the respective shortURL
 app.post("/urls/:shortURL/delete", (req, res) => {
+  //send an error if not logged in
+  if(!req.session.id) res.status(403).send('403 Access Forbidden:  Please Login to delete this TinyApp URL')
+  //create an object of shortURL:longURL value pairs attatched to the user
   const urls = urlsForUser(req.session.id, urlDatabase);
-  if (urls[req.params['shortURL']] === undefined) return res.sendStatus(403);
+  //if shortURL is not attached to the user send an error
+  if (urls[req.params['shortURL']] === undefined) res.status(403).send('403 Access Forbidden:  That URL is not owned by this user, please login to the relevant user, or contact admin');
 
   delete urlDatabase[req.params['shortURL']];
   res.redirect(`/urls`);
 });
 //a login POST
 app.post("/login", (req, res) => {
+  //clear cookies if site recognized cookie is held in the browser
   if (req.session.id) req.session = null;
   //check the users object for matching information and return the id
   const id = checkUserIdByEmail(users, req.body.user_email, req.body.password);
@@ -165,12 +144,12 @@ app.post("/login", (req, res) => {
     req.session.id = id;
     res.redirect('/urls');
     //if id returns false or undefined, send forbidden status
-  } else return res.sendStatus(403);
+  } else res.status(403).send('403 Access Forbidden:  Sorry that email and password do not match our records');
 });
 //a logout POST
 app.post("/logout", (req, res) => {
   req.session = null;
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 //Register a user to the browser for now
 app.post("/registration/create", (req, res) => {
@@ -178,9 +157,9 @@ app.post("/registration/create", (req, res) => {
   //if user is logged in, they cannot create a new login
   if (users.id) return res.redirect('/urls');
   //if registration is not filled out, send error
-  else if (!req.body.user_email || !req.body.password) return res.sendStatus(400);
+  else if (!req.body.user_email || !req.body.password) res.status(400).send('400 Error in Data:  Please fill both the email address and password fields');
   //if email is in use, send error
-  else if (checkUserIdByEmail(users, req.body.user_email) === undefined) return res.sendStatus(400);
+  else if (checkUserIdByEmail(users, req.body.user_email) === undefined) res.status(400).send('400 Error in Data:  Email already is in use, please seek admin help');
   //create a object named after the randoms string and put it inside the users object
   else {
     //hash the password
