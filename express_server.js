@@ -80,7 +80,6 @@ app.get("/u/:shortURL", (req, res) => {
   //if the URL has a valid link, send the visitor along
   if (urlDatabase[req.params.shortURL] === undefined) res.status(400).send('400 Error in Data:  This TinyApp URL no longer exists, please contact creator of the URL, or admin');
   else {
-    urlDatabase[req.params.shortURL].uses++;
     res.redirect(urlDatabase[req.params.shortURL].longURL);
   }
 });
