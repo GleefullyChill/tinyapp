@@ -40,6 +40,10 @@ const urlsForUser = function(id, database) {
   for (const shortURL in database) {
     if (database[shortURL]['id'] === id) {
       urls[shortURL] = database[shortURL].longURL;
+      urls.date = {
+        [shortURL]: database[shortURL].date,
+        
+      }
     }
   }
   return urls;

@@ -22,6 +22,7 @@ app.use(cookieSession({
 app.set('view engine', 'ejs');
 
 //databases should be moved to a separate file
+
 //holds data on urls and their respective short URLS
 const urlDatabase = {
 };
@@ -76,15 +77,14 @@ app.get("/login", (req, res) => {
 });
 //redirects the shortURL from its respective /url to the corresponding web addreess
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
   //if the URL has a valid link, send the visitor along
-  if (longURL === undefined) res.status(400).send('400 Error in Data:  This TinyApp URL no longer exists, please contact creator of the URL, or admin');
-  else res.redirect(longURL);
+  if (urlDatabase[req.params.shortURL] === undefined) res.status(400).send('400 Error in Data:  This TinyApp URL no longer exists, please contact creator of the URL, or admin');
+  else res.redirect(urlDatabase[req.params.shortURL].longURL);
 });
 //where the details of the shorturls lives, including a way to edit where they go
 app.get("/urls/:shortURL", (req, res) => {
   const urls = urlsForUser(req.session.id, urlDatabase);
-  if (!urls[req.params.shortURL]) res.status(403).send('403 Access Forbidden:  That URL is not owned by this user, please login to the relevant user, or contact admin')
+  if (!urls[req.params.shortURL]) res.status(404).send('40 Resource Not Found:  That URL is not owned by this user, please login to the relevant user, or contact admin')
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
@@ -98,11 +98,13 @@ app.get("/urls/:shortURL", (req, res) => {
 //Paths fo POST requests
 //after creating a new shortURL it redirects to the shorURL's respective /url
 app.post("/urls", (req, res) => {
-  if (req.session.id)res.status(400).send('400 Error in Data:  Please Login or Register to create a new TinyApp URL')
+  if (!req.session.id) res.status(400).send('400 Error in Data:  Please Login or Register to create a new TinyApp URL')
   const shortURL = generateRandomString();
+  const date = Date();
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    id: req.session.id
+    id: req.session.id,
+    date
   };
   res.redirect(`/urls/${shortURL}`);
 });
@@ -113,11 +115,13 @@ app.post("/urls/:shortURL/Edit", (req, res) => {
   //create an object of shortURL:longURL value pairs attatched to the user
   const urls = urlsForUser(req.session.id, urlDatabase);
   const shortURL = req.params.shortURL;
+  const date = Date();
   //if shortURL is not attached to the user send an error
-  if (urls[shortURL] === undefined) res.status(403).send('403 Access Forbidden:  That URL is not owned by this user, please login to the relevant user, or contact admin');
+  if (urls[shortURL] === undefined) res.status(404).send('404 Resource Not Found:  That URL is not owned by this user, please login to the relevant user, or contact admin');
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    id: req.session.id
+    id: req.session.id,
+    date
   };
   res.redirect(`/urls/${shortURL}`);
 });
@@ -128,7 +132,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   //create an object of shortURL:longURL value pairs attatched to the user
   const urls = urlsForUser(req.session.id, urlDatabase);
   //if shortURL is not attached to the user send an error
-  if (urls[req.params['shortURL']] === undefined) res.status(403).send('403 Access Forbidden:  That URL is not owned by this user, please login to the relevant user, or contact admin');
+  if (urls[req.params['shortURL']] === undefined) res.status(404).send('404 Resource Not Found:  That URL is not owned by this user, please login to the relevant user, or contact admin');
 
   delete urlDatabase[req.params['shortURL']];
   res.redirect(`/urls`);
@@ -155,7 +159,7 @@ app.post("/logout", (req, res) => {
 app.post("/registration/create", (req, res) => {
   const id = generateRandomString();
   //if user is logged in, they cannot create a new login
-  if (users.id) return res.redirect('/urls');
+  if (users.id) res.redirect('/urls');
   //if registration is not filled out, send error
   else if (!req.body.user_email || !req.body.password) res.status(400).send('400 Error in Data:  Please fill both the email address and password fields');
   //if email is in use, send error
@@ -174,7 +178,6 @@ app.post("/registration/create", (req, res) => {
           id,
           password
         };
-        console.log(users[id]);
         //create a cookie for the user to skip logging in after registering and redirect to /urls
         req.session.id = id;
         res.redirect('/urls');
