@@ -34,9 +34,7 @@
         <tr>
           <!-- shows a tally of uses, stored in browser memory until databases are moved to another file -->
           <td> 
-            <% if (urls.info[shorturl]) { %>
-            <%= urls.info[shorturl].uses %>
-            <% } %>
+            <%= urls['info'+ shorturl].uses %>
           </td>
           <td>
             <!-- each short url will print after the number of their uses -->
@@ -59,9 +57,7 @@
             </td>
             <!-- Date created shows up here -->
             <td> 
-              <% if (urls.info[shorturl]) { %>
-              <%= urls.info[shorturl].date %>
-              <% } %>
+              <%= urls['info'+ shorturl].uses %>
             </td>
           </tr>
           <% } %>
